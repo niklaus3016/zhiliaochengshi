@@ -56,3 +56,15 @@ out/
 # Python caches
 __pycache__/
 *.pyc
+
+# Signing secrets (never commit local keystores/passwords)
+*.keystore
+*.jks
+*.p12
+*.pfx
+signing.properties
+my-release-key.keystore
+android/app/my-release-key.keystore
+
+# Local scratch directories
+qitaapp/
