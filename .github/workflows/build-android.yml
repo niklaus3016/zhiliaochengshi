@@ -5,162 +5,119 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build-android:
-    name: Build debug + release APK
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    env:
-      # 签名相关的 secrets 一律通过 env 透传，避免密码/alias 含引号时 bash 注入
-      KS_BASE64:      ${{ secrets.KEYSTORE_BASE64 }}
-      KS_PASSWORD:    ${{ secrets.KEYSTORE_PASSWORD }}
-      KS_ALIAS:       ${{ secrets.KEY_ALIAS }}
-      KS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build web app
+      run: npm run build
+    
+    - name: Sync web resources to Android
+      run: npx cap sync android
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'adopt'
+        java-version: '21'
+    
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Make gradlew executable
+      run: chmod +x ./android/gradlew
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
+    - name: Create keystore file from GitHub Secrets
+      run: |
+        cd android
+        if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+          echo "Error: KEYSTORE_BASE64 secret is not set"
+          exit 1
+        fi
+        if [ -f "my-release-key.keystore" ]; then
+          rm -f my-release-key.keystore
+        fi
+        echo "Creating keystore file from GitHub Secrets"
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.keystore
+        echo "=== Listing aliases in keystore ==="
+        keytool -list -keystore my-release-key.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}"
+        echo "=== Keystore file details ==="
+        ls -la my-release-key.keystore
+        file my-release-key.keystore
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Extract SHA1 from keystore
+      run: |
+        cd android
+        echo "Run # 将 base64 编码的 keystore 还原为文件"
+        echo "# 将 base64 编码的 keystore 还原为文件"
+        echo ""
+        full_output=$(keytool -list -v -keystore my-release-key.keystore -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}")
+        
+        sha1_with_colons=$(echo "$full_output" | grep -i "sha1:" | head -1 | sed 's/.*sha1:\s*//i' | sed 's/\s*$//')
+        sha256_with_colons=$(echo "$full_output" | grep -i "sha256:" | head -1 | sed 's/.*sha256:\s*//i' | sed 's/\s*$//')
+        md5_with_colons=$(echo "$full_output" | grep -i "md5:" | head -1 | sed 's/.*md5:\s*//i' | sed 's/\s*$//')
+        
+        echo "===== 证书指纹 ====="
+        echo "     SHA1: $sha1_with_colons"
+        echo "     SHA256: $sha256_with_colons"
+        echo "===================="
+        echo ""
+        echo "===== MD5 指纹 ====="
+        echo "$md5_with_colons"
+        echo "===================="
+        echo ""
+        echo "===== SHA1 指纹（小米应用商店用）====="
+        echo "$sha1_with_colons"
+        echo "======================================="
+        echo ""
+        echo "===== 去掉冒号的 SHA1（直接复制）====="
+        sha1_without_colons=$(echo "$sha1_with_colons" | tr -d ":")
+        echo "$sha1_without_colons"
+        echo "======================================="
+        echo ""
+        echo "===== 公钥信息 ====="
+        echo "Certificate fingerprints:"
+        echo "     SHA1: $sha1_with_colons"
+        echo "     SHA256: $sha256_with_colons"
+        signature_algorithm=$(echo "$full_output" | grep -i "Signature algorithm name" | head -1 | sed 's/.*://' | sed 's/\s*$//')
+        echo "Signature algorithm name: $signature_algorithm"
+        echo "============================="
 
-      - name: Build web app
-        run: npm run build
+    - name: Build Android Release APK
+      run: |
+        cd android
+        echo "=== Building Release APK ==="
+        ./gradlew clean
+        ./gradlew assembleRelease --no-build-cache --no-daemon -Pandroid.injected.signing.store.file=my-release-key.keystore -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+        ls -la app/build/outputs/apk/release/
 
-      - name: Sync web resources to Android
-        run: npx cap sync android
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          # actions/setup-java 对 JDK 21 推荐 zulu（AdoptOpenJDK 已迁移到 Adoptium/Temurin，
-          # 但当前项目参考的成功构建使用 zulu@21；避免 distribution='adopt' 在 JDK 21 上拉不到包）
-          distribution: 'zulu'
-          java-version: '21'
-          cache: 'gradle'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Make gradlew executable
-        run: chmod +x ./android/gradlew
-
-      - name: Validate signing secrets
-        shell: bash
-        run: |
-          set -euo pipefail
-          missing=()
-          [ -z "$KS_BASE64" ]       && missing+=(KEYSTORE_BASE64)
-          [ -z "$KS_PASSWORD" ]     && missing+=(KEYSTORE_PASSWORD)
-          [ -z "$KS_ALIAS" ]        && missing+=(KEY_ALIAS)
-          [ -z "$KS_KEY_PASSWORD" ] && missing+=(KEY_PASSWORD)
-          if [ ${#missing[@]} -gt 0 ]; then
-            echo "::error::Missing required repository secrets: ${missing[*]}"
-            exit 1
-          fi
-
-      - name: Create keystore file & print certificate fingerprints
-        working-directory: android
-        shell: bash
-        run: |
-          set -euo pipefail
-          KS_FILE="$PWD/my-release-key.keystore"
-          [ -f "$KS_FILE" ] && rm -f "$KS_FILE"
-          echo "Decoding KEYSTORE_BASE64 -> $(basename "$KS_FILE")"
-          printf '%s' "$KS_BASE64" | base64 -d > "$KS_FILE"
-          echo "=== Keystore stat ==="
-          ls -la "$KS_FILE"
-          echo "=== Keystore magic bytes (JKS: FEEDFEED / PKCS12: ASN.1 SEQUENCE 30 82 ...) ==="
-          # ubuntu-latest 默认不带 `file` 命令，用 python3 读魔法字节判断格式
-          export KS_FILE
-          python3 - <<'PY'
-          import os
-          p=os.environ["KS_FILE"]
-          with open(p,"rb") as f: h=f.read(8)
-          print("hex :", " ".join(f"{b:02x}" for b in h))
-          print("ascii:", "".join(chr(b) if 32<=b<127 else "." for b in h))
-          if   h[:4] == b'\xfe\xed\xfe\xed': print("format: JKS (Java KeyStore)")
-          elif h[:2] == b'\x30\x82':         print("format: PKCS12 (ASN.1 SEQUENCE)")
-          else:                              print("format: unknown (please double-check base64 decode)")
-          print("size  :", os.path.getsize(p), "bytes")
-          PY
-          echo "=== All keystore aliases ==="
-          keytool -list -keystore "$KS_FILE" -storepass "$KS_PASSWORD"
-          echo ""
-          full=$(keytool -list -v -keystore "$KS_FILE" -alias "$KS_ALIAS" -storepass "$KS_PASSWORD")
-          md5=$(   echo "$full" | grep -i "md5:"    | head -1 | sed -E 's/.*md5:\s*//i'    | sed 's/\s*$//')
-          sha1=$(  echo "$full" | grep -i "sha1:"   | head -1 | sed -E 's/.*sha1:\s*//i'   | sed 's/\s*$//')
-          sha256=$(echo "$full" | grep -i "sha256:" | head -1 | sed -E 's/.*sha256:\s*//i' | sed 's/\s*$//')
-          sigalg=$(echo "$full" | grep -i "Signature algorithm name" | head -1 | sed -E 's/.*:\s*//' | sed 's/\s*$//')
-          {
-            echo "===== 证书指纹 (alias=$KS_ALIAS) ====="
-            echo "     MD5:    $md5"
-            echo "     SHA1:   $sha1"
-            echo "     SHA256: $sha256"
-            echo "     签名算法: $sigalg"
-            echo "===================="
-            echo ""
-            echo "===== 去掉冒号的 SHA1（直接粘贴给应用商店）====="
-            echo "$sha1" | tr -d ":"
-            echo "==============================================="
-          } | tee "$RUNNER_TEMP/cert-fingerprints.txt"
-          # 让后续步骤使用绝对路径
-          echo "KS_FILE=$KS_FILE" >> "$GITHUB_ENV"
-
-      - name: Build release APK (signed) + debug APK
-        working-directory: android
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew assembleRelease assembleDebug --no-daemon --stacktrace \
-            "-Pandroid.injected.signing.store.file=$KS_FILE" \
-            "-Pandroid.injected.signing.store.password=$KS_PASSWORD" \
-            "-Pandroid.injected.signing.key.alias=$KS_ALIAS" \
-            "-Pandroid.injected.signing.key.password=$KS_KEY_PASSWORD"
-          echo "=== debug outputs ==="
-          ls -la app/build/outputs/apk/debug/
-          echo "=== release outputs ==="
-          ls -la app/build/outputs/apk/release/
-
-      - name: Verify release APK signature
-        working-directory: android
-        shell: bash
-        run: |
-          set -euo pipefail
-          APK=app/build/outputs/apk/release/app-release.apk
-          if command -v apksigner >/dev/null 2>&1; then
-            echo "=== apksigner verify --print-certs --verbose ==="
-            apksigner verify --print-certs --verbose "$APK"
-          else
-            echo "apksigner 不在 PATH，回退 jarsigner"
-            jarsigner -verify -strict -certs "$APK"
-          fi
-
-      - name: Upload debug APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: zhiliaochengshi-debug-apk
-          path: |
-            android/app/build/outputs/apk/debug/*.apk
-            android/app/build/outputs/apk/debug/output-metadata.json
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Upload release APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: zhiliaochengshi-release-apk
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/apk/release/output-metadata.json
-          if-no-files-found: error
-          retention-days: 30
+    - name: Build Android Debug APK
+      run: |
+        cd android
+        ./gradlew assembleDebug
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: android/app/build/outputs/apk/release/app-release.apk
+        retention-days: 30
