@@ -1,0 +1,171 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build debug + release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      # Secrets are carried through env; never inline them into shell heredocs directly.
+      KS_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KS_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Sync web resources to Android
+        run: npx cap sync android
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make gradlew executable
+        run: chmod +x ./android/gradlew
+
+      - name: Require signing secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -z "$KS_BASE64" ]      && missing+=(KEYSTORE_BASE64)
+          [ -z "$KS_PASSWORD" ]    && missing+=(KEYSTORE_PASSWORD)
+          [ -z "$KS_ALIAS" ]       && missing+=(KEY_ALIAS)
+          [ -z "$KS_KEY_PASSWORD" ] && missing+=(KEY_PASSWORD)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required repository secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Create keystore file from GitHub Secrets
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          KS_FILE="$PWD/my-release-key.keystore"
+          [ -f "$KS_FILE" ] && rm -f "$KS_FILE"
+          echo "Decoding KEYSTORE_BASE64 -> $(basename "$KS_FILE")"
+          printf '%s' "$KS_BASE64" | base64 -d > "$KS_FILE"
+          echo "=== Keystore file stat ==="
+          ls -la "$KS_FILE"
+          echo "=== Keystore magic bytes (JKS: FEEDFEED / PKCS12: ASN.1 SEQUENCE / etc.) ==="
+          # Note: GitHub ubuntu runner does NOT ship the `file` command, so we use python3.
+          export KS_FILE
+          python3 - <<'PY'
+          import os
+          p=os.environ["KS_FILE"]
+          with open(p,"rb") as f: h=f.read(8)
+          print(" ".join(f"{b:02x}" for b in h), "|", "".join(chr(b) if 32<=b<127 else "." for b in h))
+          if h[:4] == b'\xfe\xed\xfe\xed': print("Format: JKS (Java KeyStore)")
+          elif h[:2] == b'\x30\x82': print("Format: ASN.1 SEQUENCE (likely PKCS12)")
+          else: print("Format: unknown; confirm base64 decode and keystore validity")
+          print("Size:", os.path.getsize(p), "bytes")
+          PY
+          echo "KS_FILE=$KS_FILE" >> "$GITHUB_ENV"
+
+      - name: List keystore aliases & print certificate fingerprints
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== All aliases in keystore ==="
+          keytool -list -keystore "$KS_FILE" -storepass "$KS_PASSWORD"
+          echo ""
+
+          full_output=$(keytool -list -v -keystore "$KS_FILE" -alias "$KS_ALIAS" -storepass "$KS_PASSWORD")
+
+          sha1_with_colons=$(echo "$full_output" | grep -i "sha1:" | head -1 | sed 's/.*sha1:\s*//i' | sed 's/\s*$//')
+          sha256_with_colons=$(echo "$full_output" | grep -i "sha256:" | head -1 | sed 's/.*sha256:\s*//i' | sed 's/\s*$//')
+          md5_with_colons=$(echo "$full_output" | grep -i "md5:" | head -1 | sed 's/.*md5:\s*//i' | sed 's/\s*$//')
+          signature_algorithm=$(echo "$full_output" | grep -i "Signature algorithm name" | head -1 | sed -E 's/.*:[[:space:]]*//' | sed 's/\s*$//')
+
+          {
+            echo "===== 证书指纹 (alias=$KS_ALIAS) ====="
+            echo "     MD5:    $md5_with_colons"
+            echo "     SHA1:   $sha1_with_colons"
+            echo "     SHA256: $sha256_with_colons"
+            echo "     签名算法: $signature_algorithm"
+            echo "===================="
+            echo ""
+            echo "===== 去掉冒号的 SHA1（应用商店用）====="
+            echo "$sha1_with_colons" | tr -d ":"
+            echo "========================================"
+          } | tee "$RUNNER_TEMP/cert-fingerprints.txt"
+
+      - name: Build debug + release APK
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace \
+            "-Pandroid.injected.signing.store.file=$KS_FILE" \
+            "-Pandroid.injected.signing.store.password=$KS_PASSWORD" \
+            "-Pandroid.injected.signing.key.alias=$KS_ALIAS" \
+            "-Pandroid.injected.signing.key.password=$KS_KEY_PASSWORD"
+          echo "=== Debug outputs ==="
+          ls -la app/build/outputs/apk/debug/
+          echo "=== Release outputs ==="
+          ls -la app/build/outputs/apk/release/
+
+      - name: Verify release APK is signed
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          if command -v apksigner >/dev/null 2>&1; then
+            echo "=== apksigner verify --print-certs --verbose ==="
+            apksigner verify --print-certs --verbose "$APK"
+          else
+            echo "apksigner not in PATH; fallback to jarsigner -verify"
+            jarsigner -verify -strict -certs "$APK"
+          fi
+
+      - name: Upload Debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhiliaochengshi-debug-apk
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/debug/output-metadata.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhiliaochengshi-release-apk
+          path: |
+            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/apk/release/output-metadata.json
+          if-no-files-found: error
+          retention-days: 30
