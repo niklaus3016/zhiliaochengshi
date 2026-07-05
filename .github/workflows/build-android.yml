@@ -11,13 +11,13 @@ jobs:
   build-android:
     name: Build debug + release APK
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     env:
-      # Secrets are carried through env; never inline them into shell heredocs directly.
-      KS_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      KS_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-      KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+      # 签名相关的 secrets 一律通过 env 透传，避免密码/alias 含引号时 bash 注入
+      KS_BASE64:      ${{ secrets.KEYSTORE_BASE64 }}
+      KS_PASSWORD:    ${{ secrets.KEYSTORE_PASSWORD }}
+      KS_ALIAS:       ${{ secrets.KEY_ALIAS }}
       KS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
@@ -42,6 +42,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
+          # actions/setup-java 对 JDK 21 推荐 zulu（AdoptOpenJDK 已迁移到 Adoptium/Temurin，
+          # 但当前项目参考的成功构建使用 zulu@21；避免 distribution='adopt' 在 JDK 21 上拉不到包）
           distribution: 'zulu'
           java-version: '21'
           cache: 'gradle'
@@ -52,21 +54,21 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Require signing secrets
+      - name: Validate signing secrets
         shell: bash
         run: |
           set -euo pipefail
           missing=()
-          [ -z "$KS_BASE64" ]      && missing+=(KEYSTORE_BASE64)
-          [ -z "$KS_PASSWORD" ]    && missing+=(KEYSTORE_PASSWORD)
-          [ -z "$KS_ALIAS" ]       && missing+=(KEY_ALIAS)
+          [ -z "$KS_BASE64" ]       && missing+=(KEYSTORE_BASE64)
+          [ -z "$KS_PASSWORD" ]     && missing+=(KEYSTORE_PASSWORD)
+          [ -z "$KS_ALIAS" ]        && missing+=(KEY_ALIAS)
           [ -z "$KS_KEY_PASSWORD" ] && missing+=(KEY_PASSWORD)
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::error::Missing required repository secrets: ${missing[*]}"
             exit 1
           fi
 
-      - name: Create keystore file from GitHub Secrets
+      - name: Create keystore file & print certificate fingerprints
         working-directory: android
         shell: bash
         run: |
@@ -75,68 +77,61 @@ jobs:
           [ -f "$KS_FILE" ] && rm -f "$KS_FILE"
           echo "Decoding KEYSTORE_BASE64 -> $(basename "$KS_FILE")"
           printf '%s' "$KS_BASE64" | base64 -d > "$KS_FILE"
-          echo "=== Keystore file stat ==="
+          echo "=== Keystore stat ==="
           ls -la "$KS_FILE"
-          echo "=== Keystore magic bytes (JKS: FEEDFEED / PKCS12: ASN.1 SEQUENCE / etc.) ==="
-          # Note: GitHub ubuntu runner does NOT ship the `file` command, so we use python3.
+          echo "=== Keystore magic bytes (JKS: FEEDFEED / PKCS12: ASN.1 SEQUENCE 30 82 ...) ==="
+          # ubuntu-latest 默认不带 `file` 命令，用 python3 读魔法字节判断格式
           export KS_FILE
           python3 - <<'PY'
           import os
           p=os.environ["KS_FILE"]
           with open(p,"rb") as f: h=f.read(8)
-          print(" ".join(f"{b:02x}" for b in h), "|", "".join(chr(b) if 32<=b<127 else "." for b in h))
-          if h[:4] == b'\xfe\xed\xfe\xed': print("Format: JKS (Java KeyStore)")
-          elif h[:2] == b'\x30\x82': print("Format: ASN.1 SEQUENCE (likely PKCS12)")
-          else: print("Format: unknown; confirm base64 decode and keystore validity")
-          print("Size:", os.path.getsize(p), "bytes")
+          print("hex :", " ".join(f"{b:02x}" for b in h))
+          print("ascii:", "".join(chr(b) if 32<=b<127 else "." for b in h))
+          if   h[:4] == b'\xfe\xed\xfe\xed': print("format: JKS (Java KeyStore)")
+          elif h[:2] == b'\x30\x82':         print("format: PKCS12 (ASN.1 SEQUENCE)")
+          else:                              print("format: unknown (please double-check base64 decode)")
+          print("size  :", os.path.getsize(p), "bytes")
           PY
-          echo "KS_FILE=$KS_FILE" >> "$GITHUB_ENV"
-
-      - name: List keystore aliases & print certificate fingerprints
-        working-directory: android
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "=== All aliases in keystore ==="
+          echo "=== All keystore aliases ==="
           keytool -list -keystore "$KS_FILE" -storepass "$KS_PASSWORD"
           echo ""
-
-          full_output=$(keytool -list -v -keystore "$KS_FILE" -alias "$KS_ALIAS" -storepass "$KS_PASSWORD")
-
-          sha1_with_colons=$(echo "$full_output" | grep -i "sha1:" | head -1 | sed 's/.*sha1:\s*//i' | sed 's/\s*$//')
-          sha256_with_colons=$(echo "$full_output" | grep -i "sha256:" | head -1 | sed 's/.*sha256:\s*//i' | sed 's/\s*$//')
-          md5_with_colons=$(echo "$full_output" | grep -i "md5:" | head -1 | sed 's/.*md5:\s*//i' | sed 's/\s*$//')
-          signature_algorithm=$(echo "$full_output" | grep -i "Signature algorithm name" | head -1 | sed -E 's/.*:[[:space:]]*//' | sed 's/\s*$//')
-
+          full=$(keytool -list -v -keystore "$KS_FILE" -alias "$KS_ALIAS" -storepass "$KS_PASSWORD")
+          md5=$(   echo "$full" | grep -i "md5:"    | head -1 | sed -E 's/.*md5:\s*//i'    | sed 's/\s*$//')
+          sha1=$(  echo "$full" | grep -i "sha1:"   | head -1 | sed -E 's/.*sha1:\s*//i'   | sed 's/\s*$//')
+          sha256=$(echo "$full" | grep -i "sha256:" | head -1 | sed -E 's/.*sha256:\s*//i' | sed 's/\s*$//')
+          sigalg=$(echo "$full" | grep -i "Signature algorithm name" | head -1 | sed -E 's/.*:\s*//' | sed 's/\s*$//')
           {
             echo "===== 证书指纹 (alias=$KS_ALIAS) ====="
-            echo "     MD5:    $md5_with_colons"
-            echo "     SHA1:   $sha1_with_colons"
-            echo "     SHA256: $sha256_with_colons"
-            echo "     签名算法: $signature_algorithm"
+            echo "     MD5:    $md5"
+            echo "     SHA1:   $sha1"
+            echo "     SHA256: $sha256"
+            echo "     签名算法: $sigalg"
             echo "===================="
             echo ""
-            echo "===== 去掉冒号的 SHA1（应用商店用）====="
-            echo "$sha1_with_colons" | tr -d ":"
-            echo "========================================"
+            echo "===== 去掉冒号的 SHA1（直接粘贴给应用商店）====="
+            echo "$sha1" | tr -d ":"
+            echo "==============================================="
           } | tee "$RUNNER_TEMP/cert-fingerprints.txt"
+          # 让后续步骤使用绝对路径
+          echo "KS_FILE=$KS_FILE" >> "$GITHUB_ENV"
 
-      - name: Build debug + release APK
+      - name: Build release APK (signed) + debug APK
         working-directory: android
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace \
+          ./gradlew assembleRelease assembleDebug --no-daemon --stacktrace \
             "-Pandroid.injected.signing.store.file=$KS_FILE" \
             "-Pandroid.injected.signing.store.password=$KS_PASSWORD" \
             "-Pandroid.injected.signing.key.alias=$KS_ALIAS" \
             "-Pandroid.injected.signing.key.password=$KS_KEY_PASSWORD"
-          echo "=== Debug outputs ==="
+          echo "=== debug outputs ==="
           ls -la app/build/outputs/apk/debug/
-          echo "=== Release outputs ==="
+          echo "=== release outputs ==="
           ls -la app/build/outputs/apk/release/
 
-      - name: Verify release APK is signed
+      - name: Verify release APK signature
         working-directory: android
         shell: bash
         run: |
@@ -146,11 +141,11 @@ jobs:
             echo "=== apksigner verify --print-certs --verbose ==="
             apksigner verify --print-certs --verbose "$APK"
           else
-            echo "apksigner not in PATH; fallback to jarsigner -verify"
+            echo "apksigner 不在 PATH，回退 jarsigner"
             jarsigner -verify -strict -certs "$APK"
           fi
 
-      - name: Upload Debug APK artifact
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: zhiliaochengshi-debug-apk
@@ -160,7 +155,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload Release APK artifact
+      - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: zhiliaochengshi-release-apk
