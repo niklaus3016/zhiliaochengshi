@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐私政策 - 知了城市</title>
+    <!-- 知了城市官方字体体系：衬线标题 + 无衬线正文 + 等宽拼音 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ===================== 知了城市国潮极简色板（深色模式，与 App 默认主题一致） ===================== */
+        :root {
+            --primary: #2B5E5E;              /* 山河绿主色 */
+            --primary-dark: #234D4D;          /* hover 加深山河绿 */
+            --accent: #D4A373;                /* 暖沙色辅助 */
+            --accent-light: #EADBC3;           /* 浅色沙色（标题高亮） */
+            --accent-bg-light: #FAF7F2;        /* 浅纸张色 */
+            --text-dark: #2A2A2A;              /* 深色标题 */
+            --text-muted: #A3998E;             /* 暖木灰次要文字 */
+            --border-warm: #E8DFD4;            /* 暖木分割线（浅色） */
+            --zinc-900: #18181B;               /* 容器墨黑 */
+            --zinc-950: #09090B;               /* 深层墨黑 */
+            --zinc-800: #27272A;               /* 分割/边框墨黑 */
+            --zinc-700: #3F3F46;               /* 卡片边框墨黑 */
+            --slate-400: #94A3B8;              /* 正文 次灰 */
+            --slate-300: #CBD5E1;              /* 正文 主色 */
+            --slate-200: #E2E8F0;              /* 加粗强调色 */
+            --slate-100: #F1F5F9;              /* 最亮强调 */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 知了城市应用级墨黑点状纸张纹理背景 */
+        html, body {
+            height: 100%;
+            background-color: #0F0F0F;
+            background-image: radial-gradient(circle at 1px 1px, rgba(212,163,115,0.08) 1px, transparent 0);
+            background-size: 22px 22px;
+            color: var(--slate-300);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            font-size: 14px;
+            line-height: 1.75;
+            text-align: justify;
+        }
+
+        /* ================ 主容器 ================ */
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            background: var(--zinc-900);
+            padding: 48px 40px;
+            min-height: 100vh;
+            border-left: 1px solid var(--zinc-800);
+            border-right: 1px solid var(--zinc-800);
+            position: relative;
+        }
+
+        /* ================ 标题区 ================ */
+        .hero {
+            text-align: center;
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--zinc-800);
+        }
+        .hero-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: rgba(212,163,115,0.13);
+            border-radius: 16px;
+            margin-bottom: 8px;
+        }
+        .hero-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--accent);
+        }
+        .hero h1 {
+            font-family: 'Noto Serif SC', 'Songti SC', serif;
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: -0.2px;
+            color: var(--accent-light);
+            line-height: 1.3;
+        }
+        .hero-date {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .hero-date strong {
+            font-weight: 500;
+            color: var(--slate-200);
+        }
+
+        /* ================ 欢迎语高亮 Banner（主色左4px边 + 半透明背景） ================ */
+        .highlight {
+            background: rgba(43,94,94,0.08);
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 16px;
+            margin: 24px 0 24px 0;
+        }
+        .highlight p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--slate-300);
+        }
+        .highlight strong {
+            color: var(--slate-200);
+            font-weight: 600;
+        }
+        .highlight strong.serif {
+            font-family: 'Noto Serif SC', serif;
+            color: var(--slate-100);
+        }
+        .highlight strong.brand {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ================ 普通段落 ================ */
+        p {
+            margin-bottom: 16px;
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--slate-300);
+        }
+        p strong {
+            color: var(--slate-200);
+            font-weight: 600;
+        }
+
+        /* ================ 章节标题 ================ */
+        section {
+            margin-top: 28px;
+        }
+        h2 {
+            font-family: 'Noto Serif SC', 'Songti SC', serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.1px;
+            color: var(--accent-light);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(43,94,94,0.2);
+        }
+
+        /* ================ 有序 / 无序列表 ================ */
+        ol, ul {
+            padding-left: 24px;
+            margin: 0 0 20px 0;
+        }
+        li {
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--slate-300);
+        }
+        li strong {
+            color: var(--slate-200);
+            font-weight: 600;
+        }
+        li strong.highlight-green {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ================ 联系我们卡片 ================ */
+        .contact {
+            background: rgba(39,39,42,0.6);
+            padding: 16px;
+            border-radius: 16px;
+            margin-top: 16px;
+            border: 1px solid var(--zinc-700);
+        }
+        .contact p {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--slate-300);
+        }
+        .contact p:last-child {
+            margin-bottom: 0;
+        }
+        .contact strong {
+            font-family: 'Noto Serif SC', serif;
+            color: var(--slate-200);
+            font-weight: 600;
+        }
+        .contact a {
+            color: var(--accent);
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .contact a:hover {
+            text-decoration: underline;
+        }
+        .contact .reply-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding-top: 4px;
+        }
+
+        /* ================ 页脚 ================ */
+        .footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--zinc-800);
+            text-align: center;
+            max-width: 560px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .footer p {
+            text-align: center;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        .footer .thanks {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 14px;
+            color: var(--slate-400);
+        }
+        .footer .motto {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .footer .copyright {
+            margin-top: 12px;
+            font-size: 11px;
+            letter-spacing: 0.4px;
+            color: #71717A;
+        }
+        .footer p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ================ 响应式（移动端小屏优化） ================ */
+        @media (max-width: 600px) {
+            .container {
+                padding: 32px 20px;
+            }
+            .hero h1 {
+                font-size: 22px;
+            }
+            h2 {
+                font-size: 17px;
+                margin-top: 24px;
+            }
+            p, li {
+                font-size: 13px;
+            }
+            .highlight {
+                padding: 16px;
+                border-radius: 14px;
+            }
+            .contact {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- ================ 标题区 ================ -->
+        <div class="hero">
+            <div class="hero-icon" aria-hidden="true">
+                <!-- 与 lucide-react ShieldCheck 图标一致的内联 SVG，保证零外部依赖 -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </div>
+            <h1>隐私政策</h1>
+            <p class="hero-date"><strong>生效日期</strong>：2026年07月06日</p>
+        </div>
+
+        <!-- ================ 欢迎语 Banner ================ -->
+        <div class="highlight">
+            <p>
+                欢迎使用「<strong class="serif">知了城市</strong>」（以下简称"本应用"）。本应用由
+                <strong class="brand"> 深圳丰佰瑞网络科技有限公司 </strong>
+                （以下简称"我们"）开发并运营。我们深知个人信息对您的重要性，将严格遵守《中华人民共和国个人信息保护法》等相关法律法规，保护您的个人信息安全。
+            </p>
+        </div>
+
+        <!-- ================ 引言段落 ================ -->
+        <p>
+            本隐私政策旨在说明我们如何收集、使用、存储和保护您在使用本应用过程中提供的个人信息，以及您对这些信息所享有的权利。请您在使用本应用前仔细阅读并充分理解本政策的全部内容，尤其是
+            <strong>加粗的条款</strong>。如您对本政策有任何疑问、意见或建议，可通过本政策末尾提供的联系方式与我们联系。
+        </p>
+
+        <!-- ========== 一、我们收集的信息 ========== -->
+        <section>
+            <h2>一、我们收集的信息</h2>
+            <p>
+                本应用为<strong>纯前端、无后端、完全本地化运行</strong>的行政区划科普工具，我们<strong>不在任何云端服务器上收集、上传、存储或共享您的个人身份信息</strong>。在您使用本应用的过程中，仅会在您的设备本地产生以下数据：
+            </p>
+            <ol>
+                <li>
+                    <strong>足迹与收藏数据（本地存储）：</strong>
+                    您在使用本应用过程中主动产生的<strong>「知了足迹」收藏阁记录、行政区划游历历史（最多 20 条）、以及全域搜索历史</strong>。这些数据为核心体验内容，用于为您提供收藏回溯、游历回看和搜索建议，且<strong>仅直接保存在您当前设备浏览器的 localStorage 中</strong>，不会上传到任何外部服务器。
+                </li>
+                <li>
+                    <strong>设备显示适配信息（临时内存，不持久化）：</strong>
+                    为了保障应用界面的响应式布局与字体缩放体验，我们会在内存中临时读取您的<strong>屏幕尺寸、浏览器视窗宽度</strong>，仅用于 CSS 适配，不会写入任何持久化存储，也不会收集 IMEI、Android ID、IDFA、MAC 地址、IP 地址等可识别个人身份的设备信息。
+                </li>
+            </ol>
+        </section>
+
+        <!-- ========== 二、我们如何使用收集的信息 ========== -->
+        <section>
+            <h2>二、我们如何使用收集的信息</h2>
+            <p>
+                我们仅会在以下<strong>合法、正当、必要且完全本地化</strong>的范围内使用上述信息：
+            </p>
+            <ol>
+                <li>
+                    <strong>提供与维护核心服务：</strong>
+                    使用您的足迹与收藏数据实现收藏阁高亮、游历历史回显、搜索建议等核心功能；通过设备显示适配信息优化沙盘地图、区划名册与详情页在不同尺寸屏幕下的排版与可读性。
+                </li>
+                <li>
+                    <strong>完全本地化的体验优化：</strong>
+                    所有数据分析、统计与个性化排序（如搜索历史匹配）均仅在您当前设备的浏览器内存中完成，<strong>不产生任何网络上报</strong>，亦不用于用户画像或第三方广告投放。
+                </li>
+            </ol>
+        </section>
+
+        <!-- ========== 三、我们如何共享、转让和公开披露信息 ========== -->
+        <section>
+            <h2>三、我们如何共享、转让和公开披露信息</h2>
+            <p>
+                我们郑重承诺：<strong class="highlight-green">本应用无任何后端服务器、不集成任何第三方统计 / 广告 / 推送 SDK，不会在以下情形之外向任何第三方共享、转让或公开披露您的信息</strong>：
+            </p>
+            <ol>
+                <li>
+                    <strong>法定情形：</strong>
+                    若未来根据法律法规的规定、行政或司法机关的强制性要求，我们可能会在其法定权限内向有关部门披露您存于本地的相关信息；届时我们将严格要求其对信息承担保密义务。
+                </li>
+                <li>
+                    <strong>获得您的明确书面同意：</strong>
+                    在获得您的明确书面同意并确认传输范围与用途后，我们才会协助您向第三方共享本地存储的个人信息。
+                </li>
+            </ol>
+        </section>
+
+        <!-- ========== 四、我们如何存储和保护信息 ========== -->
+        <section>
+            <h2>四、我们如何存储和保护信息</h2>
+            <ol>
+                <li>
+                    <strong>存储地点、介质与期限：</strong>
+                    您的足迹、收藏与搜索历史全部存储于<strong>您个人设备浏览器的 localStorage 中</strong>（存储介质完全归属您所有与控制），其地理位置为您当前设备所在的物理地点。我们会在实现本政策所述目的所必需的最短时间内保留这些信息；
+                    <strong>超出保留期限或您主动卸载本应用 / 清除浏览器缓存时，所有数据将随本地存储一同被物理删除</strong>，不留任何云端副本。
+                </li>
+                <li>
+                    <strong>安全措施：</strong>
+                    由于所有数据均保存在您本地的浏览器沙箱中，其安全性由浏览器同源策略保障，并由您设备的操作系统与浏览器安全防护共同负责。建议您在公共设备上使用时，及时通过「选项设置 → 重置所有应用数据」一键清除所有个人痕迹。
+                </li>
+            </ol>
+        </section>
+
+        <!-- ========== 五、您的权利 ========== -->
+        <section>
+            <h2>五、您的权利</h2>
+            <p>
+                根据相关法律法规，结合本应用完全本地化的产品特性，您对您的个人信息享有以下权利：
+            </p>
+            <ol>
+                <li>
+                    <strong>访问与查阅权：</strong>
+                    您可以随时在底部导航「知了足迹」Tab 中查看和管理您全部的收藏阁记录与游历历史。
+                </li>
+                <li>
+                    <strong>更正 / 删除权：</strong>
+                    您可以随时单条移除收藏、单条清除足迹；对于有异议的数据，您也可以直接删除对应条目后重新使用应用累积。
+                </li>
+                <li>
+                    <strong>数据清空 / 撤回同意：</strong>
+                    您可以在「选项设置 → 重置所有应用数据」中一键彻底清除本应用保存在该设备上的收藏、浏览痕迹与搜索记录，此操作等同于撤回本隐私政策项下对信息处理的全部同意。
+                </li>
+                <li>
+                    <strong>数据导出与可携带权：</strong>
+                    因所有数据均在本地，您可以通过浏览器 / WebView 开发者工具或系统级备份自行导出 localStorage 数据；我们不设置任何技术壁垒阻碍您的导出操作。
+                </li>
+            </ol>
+        </section>
+
+        <!-- ========== 六、未成年人保护 ========== -->
+        <section>
+            <h2>六、未成年人保护</h2>
+            <p>
+                我们非常重视对未成年人个人信息的保护。如您是未满 14 周岁的未成年人，在使用本应用前，应在监护人的指导下仔细阅读本政策，并征得监护人的同意后再使用本应用。
+                如监护人发现我们在未事先获得监护人可验证同意的情况下收集了未成年人的个人信息，请通过本政策底部邮箱与我们联系，我们将在核实后第一时间协助监护人彻底清除相关本地数据。
+            </p>
+        </section>
+
+        <!-- ========== 七、本政策的更新 ========== -->
+        <section>
+            <h2>七、本政策的更新</h2>
+            <p>
+                我们可能会根据法律法规的更新、业务的调整或技术的发展，适时对本隐私政策进行修订。修订后的政策将在本应用内「选项设置 → 完整隐私政策」的显著位置公示；对于重大变更，我们会在启动弹窗中再次向您提示并征求同意。如您继续使用本应用，即表示您同意接受修订后的政策。
+            </p>
+        </section>
+
+        <!-- ========== 八、联系我们 ========== -->
+        <section>
+            <h2>八、联系我们</h2>
+            <p>
+                如您对本隐私政策有任何疑问、意见或建议，或需要行使您的相关权利（访问、更正、删除、导出、撤回同意、投诉举报），请通过以下方式与我们联系：
+            </p>
+            <div class="contact">
+                <p>
+                    <strong>运营主体：</strong>深圳丰佰瑞网络科技有限公司
+                </p>
+                <p>
+                    <strong>电子邮箱：</strong>
+                    <a href="mailto:Jp112025@163.com">Jp112025@163.com</a>
+                </p>
+                <p class="reply-note">
+                    一般情况下，我们将在收到您的请求后 15 个工作日内予以回复。
+                </p>
+            </div>
+        </section>
+
+        <!-- ================ 页脚 ================ -->
+        <div class="footer">
+            <p class="thanks">感谢您使用「知了城市」！</p>
+            <p class="motto">
+                我们致力于为您提供科学严谨、纯净离线的中国行政区划科普体验。
+            </p>
+            <p class="copyright">© 2026 深圳丰佰瑞网络科技有限公司 版权所有</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-primary: #2B5E5E;       /* 极简山河绿 */
+  --color-primary-dark: #1B3E3E;
+  --color-accent: #D4A373;        /* 暖沙色 */
+  --color-accent-light: #F5F2EE;  /* 浅茶香 */
+  --color-bg-light: #FDFCF9;      /* 极简纸白 */
+  --color-bg-dark: #131616;       /* 极简墨黑 */
+  --color-border-warm: #EEE7DE;   /* 温润暖线 */
+  --color-text-muted: #A3998E;    /* 暖木灰 */
+  --color-text-dark: #2A2A2A;     /* 极深灰 */
+}
+
+/* 字体大小三档调节 */
+.text-size-sm {
+  font-size: 13px;
+}
+.text-size-sm h1 {
+  font-size: 1.5rem;
+}
+.text-size-sm h2 {
+  font-size: 1.25rem;
+}
+.text-size-sm h3 {
+  font-size: 1.05rem;
+}
+.text-size-sm p {
+  font-size: 0.825rem;
+  line-height: 1.4;
+}
+
+.text-size-md {
+  font-size: 15px;
+}
+.text-size-md h1 {
+  font-size: 1.875rem;
+}
+.text-size-md h2 {
+  font-size: 1.5rem;
+}
+.text-size-md h3 {
+  font-size: 1.2rem;
+}
+.text-size-md p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.text-size-lg {
+  font-size: 17px;
+}
+.text-size-lg h1 {
+  font-size: 2.25rem;
+}
+.text-size-lg h2 {
+  font-size: 1.75rem;
+}
+.text-size-lg h3 {
+  font-size: 1.35rem;
+}
+.text-size-lg p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+/* 国潮水墨微动效 */
+@keyframes inkFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ink-fade {
+  animation: inkFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 国风云纹纸张纹理背景效果 */
+.bg-paper-light {
+  background-color: #FDFCF9;
+  background-image: radial-gradient(rgba(43, 94, 94, 0.015) 1px, transparent 0),
+                    radial-gradient(rgba(212, 163, 115, 0.02) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
+.bg-paper-dark {
+  background-color: #131616;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* 自定义微型阴影 */
+.card-shadow {
+  box-shadow: 0 4px 20px -2px rgba(43, 94, 94, 0.04);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 10px 25px -4px rgba(43, 94, 94, 0.08);
+  transform: translateY(-2px);
+}
+
+/* 彻底移除所有右侧/底部滚动条，使页面极其整洁（支持滚轮与触摸手势滑动） */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html, body, * {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+

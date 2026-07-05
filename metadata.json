@@ -1,0 +1,6 @@
+{
+  "name": "知了城市",
+  "description": "一款纯前端、零后端、离线可用的中国行政区划科普工具APP，主打极简国潮美学与沉浸式地理科普体验。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

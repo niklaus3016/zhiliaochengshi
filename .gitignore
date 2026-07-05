@@ -1,0 +1,58 @@
+# ===== Node.js / Vite =====
+node_modules/
+dist/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.cache/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# ===== Capacitor / Android generated =====
+android/.gradle/
+android/build/
+android/app/build/
+android/**/build/
+android/local.properties
+android/captures/
+android/.cxx/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+android/capacitor-cordova-android-plugins/build/
+android/gradle/  # keep gradle wrapper jar, but no-op here (wrapper included below)
+
+# Gradle intermediates
+*.apk
+*.aab
+*.aar
+*.ap_
+*.dex
+*.class
+*.hprof
+
+# Keep gradle wrapper
+!android/gradle/wrapper/gradle-wrapper.jar
+!android/gradle/wrapper/gradle-wrapper.properties
+
+# Ad-hoc scripts output
+out/
+
+# Python caches
+__pycache__/
+*.pyc
