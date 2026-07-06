@@ -1,14 +1,40 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2B5E5E" />
+    <!-- 强制深色：WebView 首帧即深色，避免 Capacitor 首帧白屏/浅色闪烁 -->
+    <meta name="theme-color" content="#131616" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#131616" />
+    <script>
+      // 在 React 挂载前强制将根元素切到 dark，保证 Tailwind dark:* 类在首帧生效
+      (function () {
+        try {
+          var root = document.documentElement;
+          root.classList.add('dark');
+          root.classList.remove('light');
+          root.style.colorScheme = 'dark';
+          try {
+            var saved = localStorage.getItem('zhiliaocity_theme');
+            if (saved === 'light') {
+              // 用户明确选过浅色才回退（极少发生；默认强制深色）
+              root.classList.remove('dark');
+              root.classList.add('light');
+              root.style.colorScheme = 'light';
+            }
+          } catch (e) {}
+        } catch (e) {}
+      })();
+    </script>
     <title>知了城市</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <style>
+      /* 在 Vite 注入 CSS 前先给出一致的墨黑底色，避免 WebView 白闪 */
+      html, body { background: #131616 !important; color: #CBD5E1 !important; margin: 0; min-height: 100vh; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

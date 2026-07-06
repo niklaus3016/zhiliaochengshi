@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 知了城市：墨黑主题常量（与 Web 端 bg-paper-dark / primary / accent 一一对应） -->
+    <color name="colorPrimary">#2B5E5E</color>        <!-- 山河绿 -->
+    <color name="colorPrimaryDark">#131616</color>    <!-- 墨黑（状态栏/导航栏） -->
+    <color name="colorPrimaryVariant">#1B3E3E</color>
+    <color name="colorAccent">#D4A373</color>         <!-- 暖沙色 -->
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorBackground">#131616</color>     <!-- 墨黑 -->
+    <color name="colorSurface">#18181B</color>        <!-- 容器墨黑（zinc-900） -->
+    <color name="colorOnSurface">#CBD5E1</color>      <!-- slate-300 -->
+    <color name="splashBackground">#131616</color>    <!-- 启动页底色 -->
+</resources>
