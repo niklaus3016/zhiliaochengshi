@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. 强制深色：无论系统浅色/深色，应用级均使用墨黑底 -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <!--
+        Base application theme.
+        parent 选择 AppCompat 自带、已在 classpath 里的主题（避免 AAPT resource linking failed）。
+        强制深色通过两个手段叠加实现：
+          1. MainActivity.onCreate 前置 AppCompatDelegate.MODE_NIGHT_YES
+          2. 以下所有 <item/> 显示声明 墨黑（#131616）背景、深色状态栏/导航栏图标
+    -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -12,12 +18,12 @@
         <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
         <item name="android:windowActionBarOverlay">false</item>
         <item name="android:windowContentOverlay">@null</item>
-        <!-- 深色背景 + 浅色状态栏/导航栏图标 -->
+        <!-- 深色背景 + 浅色状态栏/导航栏图标（API 23+/26+ 生效，低版本忽略） -->
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
 
-    <style name="AppTheme.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:colorBackground">@color/colorBackground</item>
@@ -28,8 +34,12 @@
         <item name="android:windowLightNavigationBar">false</item>
     </style>
 
-    <!-- 启动页主题：墨黑启动页 + 墨黑状态栏/导航栏，避免白闪 -->
-    <style name="AppTheme.NoActionBarLaunch" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <!--
+        启动页主题：与 Web 墨黑点阵纸保持一致，避免白屏/浅色闪。
+        parent 选择 AppCompat 自带的 DayNight.NoActionBar（Capacitor 默认就引入 androidx.appcompat，
+        一定在 classpath 里，不会出现 resource linking failed）。
+    -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@drawable/splash</item>
