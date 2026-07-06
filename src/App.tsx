@@ -38,14 +38,10 @@ export default function App() {
 
   // 1. 初始化读取本地缓存
   useEffect(() => {
-    const savedTheme = localStorage.getItem('zhiliaocity_theme') as 'light' | 'dark' | null;
-    const initialTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
-    setTheme(initialTheme);
-    applyTheme(initialTheme);
-
-    const savedTextSize = localStorage.getItem('zhiliaocity_text_size') as 'sm' | 'md' | 'lg' | null;
-    const initialTextSize = savedTextSize === 'sm' || savedTextSize === 'md' || savedTextSize === 'lg' ? savedTextSize : 'sm';
-    setTextSize(initialTextSize);
+    // 强制使用深色主题与精致小字号
+    setTheme('dark');
+    applyTheme('dark');
+    setTextSize('sm');
 
     // 收藏加载
     const savedFavorites = localStorage.getItem('zhiliaocity_favorites');
