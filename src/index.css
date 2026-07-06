@@ -2,6 +2,13 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ============================================================
+   知了城市：Tailwind v4 dark mode 强制采用 class 策略
+   解决：手机系统浅色时 dark:* 类完全不生效的问题
+   （v4 默认 dark variant 走媒体查询，无法被 <html class="dark"> 触发）
+   ============================================================ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Noto Serif SC", "Playfair Display", serif;
@@ -121,5 +128,60 @@
 html, body, * {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
+}
+
+/* ============================================================
+   知了城市 · 强制深色兜底（与 Tailwind darkMode 策略解耦）
+   通过在 <html> 上加 .zhiliaocity-force-dark 类启用，
+   由 index.html <head> 里的 inline 脚本首帧同步写入。
+
+   解决两个核心问题：
+     1) Tailwind v4 默认 dark variant 走 media query，手机系统浅色时 dark:* 不生效；
+        我们在上面已改用 @custom-variant dark (&:where(.dark, .dark *)) 修复。
+     2) 组件里仍可能写出 theme==='light' ? 'bg-paper-light' : 'bg-paper-dark'，
+        如果 React 状态初始化慢 1 帧，会先露出纸白。
+   这个区段把 .paper-light / .bg-white 的实际渲染结果也锚定为深色。
+   ============================================================ */
+html.zhiliaocity-force-dark,
+html.zhiliaocity-force-dark body,
+html.zhiliaocity-force-dark #root {
+  background-color: #131616 !important;
+  color: #CBD5E1 !important;
+}
+
+html.zhiliaocity-force-dark #root > div {
+  background-color: #131616 !important;
+  color: #E2E8F0 !important;
+}
+
+/* "纸张白底" 类：强制渲染为墨黑点阵纸，与 bg-paper-dark 完全一致 */
+html.zhiliaocity-force-dark .bg-paper-light {
+  background-color: #131616 !important;
+  background-image: radial-gradient(rgba(212, 163, 115, 0.08) 1px, transparent 0),
+                    radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 0) !important;
+  background-size: 22px 22px, 20px 20px !important;
+}
+
+/* "纯白容器" 类：强制渲染为锌黑容器，与 PrivacyConsent 面板一致 */
+html.zhiliaocity-force-dark .bg-white {
+  background-color: #18181B !important;
+}
+
+/* text-slate-800 / text-text-dark / 文字类：强制渲染为浅色文本 */
+html.zhiliaocity-force-dark .text-slate-800,
+html.zhiliaocity-force-dark .text-text-dark,
+html.zhiliaocity-force-dark .text-slate-600,
+html.zhiliaocity-force-dark .text-text-muted {
+  color: #E2E8F0 !important;
+}
+html.zhiliaocity-force-dark .text-slate-400,
+html.zhiliaocity-force-dark .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+/* warm 边框类：强制走深色锌系 */
+html.zhiliaocity-force-dark .border-border-warm,
+html.zhiliaocity-force-dark [class*="border-border-warm"] {
+  border-color: #3F3F46 !important;
 }
 

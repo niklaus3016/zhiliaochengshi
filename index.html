@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN" class="dark zhiliaocity-force-dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,22 +7,19 @@
     <meta name="theme-color" content="#131616" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#131616" />
     <script>
-      // 在 React 挂载前强制将根元素切到 dark，保证 Tailwind dark:* 类在首帧生效
+      // 在 React 挂载前强制根元素切到 dark：
+      //   1) 写 .dark → 配合 index.css 中的 @custom-variant dark (&:where(.dark, .dark *)) 让 Tailwind dark:* 类生效（class 策略，不跟系统走）
+      //   2) 写 .zhiliaocity-force-dark → 配合 index.css 末尾的硬兜底：把 .paper-light/.bg-white/.text-slate-800 等浅色类也渲染成深色，
+      //      解决组件内写了 `theme==='light' ? 'bg-paper-light text-slate-800' : 'bg-paper-dark text-slate-100'`，
+      //      但首帧 theme 状态/逻辑慢一拍导致 Capacitor WebView 露纸白/浅色文字的问题。
+      // 知了城市要求：永远默认深色进入，所以不回退 localStorage 的浅色选择。
       (function () {
         try {
           var root = document.documentElement;
           root.classList.add('dark');
+          root.classList.add('zhiliaocity-force-dark');
           root.classList.remove('light');
           root.style.colorScheme = 'dark';
-          try {
-            var saved = localStorage.getItem('zhiliaocity_theme');
-            if (saved === 'light') {
-              // 用户明确选过浅色才回退（极少发生；默认强制深色）
-              root.classList.remove('dark');
-              root.classList.add('light');
-              root.style.colorScheme = 'light';
-            }
-          } catch (e) {}
         } catch (e) {}
       })();
     </script>
